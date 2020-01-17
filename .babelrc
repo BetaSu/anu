@@ -6,11 +6,10 @@
         "modules": false
       }
     ],
-    "react"
+    "@babel/preset-react"
   ],
   "plugins": [
     [
-      "transform-class-properties",
       "transform-es2015-classes",
       {
         "loose": true
@@ -22,25 +21,6 @@
         "useBuiltIns": true
       }
     ],
-    [
-      "module-resolver",
-      {
-        "root": [
-          "."
-        ],
-        "alias": {
-          "react-core": "./packages/core",
-          "react-fiber": "./packages/fiber",
-          "prop-types": "./lib/ReactPropTypes",
-          "create-react-class": "./lib/createClass",
-          "react-server-renderer": "./dist/React/server",
-          "react-noop-renderer": "./dist/ReactNoop",
-          "react": "./dist/React",
-          "lib": "./lib",
-          "react-dom": "./dist/React",
-          "test-utils": "./lib/ReactTestUtils"
-        }
-      }
-    ]
+    "transform-class-properties"
   ]
 }

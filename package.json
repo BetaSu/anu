@@ -7,13 +7,13 @@
     "dev": "tsc -w",
     "build": "tsc && rollup -c ./scripts/build/rollup.js && rollup -c ./scripts/build/rollup.ie.js",
     "test": "cross-env NODE_ENV=development jest --config ./scripts/jest/config.source.js",
-    "start": "serve .",
     "mp": "tsc && rollup -c ./scripts/build/rollup.wx.js && rollup -c ./scripts/build/rollup.ali.js  &&rollup -c ./scripts/build/rollup.bu.js &&rollup -c ./scripts/build/rollup.quick.js  && rollup -c ./scripts/build/rollup.h5.js",
     "ts": "rollup -c ./scripts/build/rollup.ts.js",
     "noop": "rollup -c ./scripts/build/rollup.noop.js",
     "buildIE": "webpack --config ./scripts/build/buildIE.js",
     "fa-build": "webpack --config ./node_modules/fa-toolkit/webpack.config.js",
-    "fa-watch": "webpack --watch --config ./node_modules/fa-toolkit/webpack.config.js"
+    "fa-watch": "webpack --watch --config ./node_modules/fa-toolkit/webpack.config.js",
+    "start": "webpack"
   },
   "repository": {
     "type": "git",
@@ -51,6 +51,7 @@
     "@babel/plugin-transform-runtime": "^7.4.4",
     "@babel/plugin-transform-template-literals": "^7.0.0",
     "@babel/preset-env": "^7.3.1",
+    "@babel/preset-es2015": "^7.0.0-beta.53",
     "@babel/preset-react": "^7.0.0",
     "@babel/template": "^7.2.2",
     "@babel/types": "^7.3.3",
