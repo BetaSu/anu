@@ -4,7 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const outputPath = path.resolve(__dirname, 'dist');
 
 module.exports = {
-    entry: path.resolve(__dirname, './packages/render/dom/index.ie8.js'),
+    entry: path.resolve(__dirname, './demo'),
     output: {
         path: outputPath,
         filename: 'bundle.js'
@@ -12,8 +12,10 @@ module.exports = {
     resolve: {
         extensions: ['.js', '.json', '.jsx'],
         alias: {
-            react: path.resolve(__dirname, './packages/render/dom/index.ie8.js'),
+            'react': path.resolve(__dirname, './packages/render/dom/index.ie8.js'),
             'react-dom': path.resolve(__dirname, './packages/render/dom/index.ie8.js'),
+            'react-core': path.resolve(__dirname, './packages/core'),
+            'react-fiber': path.resolve(__dirname, './packages/fiber'),
             'prop-types': path.resolve(__dirname, './lib/ReactPropTypes.js'),
             'create-react-class': path.resolve(
                 __dirname,
