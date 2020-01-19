@@ -12,8 +12,8 @@ module.exports = {
     resolve: {
         extensions: ['.js', '.json', '.jsx'],
         alias: {
-            'react': path.resolve(__dirname, './packages/render/dom/index.ie8.js'),
-            'react-dom': path.resolve(__dirname, './packages/render/dom/index.ie8.js'),
+            'react': path.resolve(__dirname, './packages/render/dom/index.js'),
+            'react-dom': path.resolve(__dirname, './packages/render/dom/index.js'),
             'react-core': path.resolve(__dirname, './packages/core'),
             'react-fiber': path.resolve(__dirname, './packages/fiber'),
             'prop-types': path.resolve(__dirname, './lib/ReactPropTypes.js'),
