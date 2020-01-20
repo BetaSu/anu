@@ -1,5 +1,4 @@
 const path = require('path');
-const es3ifyPlugin = require('es3ify-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const outputPath = path.resolve(__dirname, 'dist');
 
@@ -54,10 +53,10 @@ module.exports = {
         contentBase: path.join(__dirname, 'dist'),
         compress: true,
         open: true,
+        quiet: true,
         port: 9000
     },
     plugins: [
-        new es3ifyPlugin(),
         new HtmlWebpackPlugin({
             template: path.resolve(__dirname, './index.html')
         })

@@ -184,7 +184,6 @@ export function updateClassComponent(fiber, info) {
         cacheContext(instance, unmaskedContext, newContext);
     }
     let isStateful = !instance.__isStateless;
-    console.log('isStateful', isStateful, fiber);
     instance._reactInternalFiber = fiber; //更新rIF
     if (isStateful) {
         //有狀态组件
