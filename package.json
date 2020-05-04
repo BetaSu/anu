@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RubyLouvre/anu.git"
+    "url": "git+https://github.com/lizheming/anu.git"
   },
   "keywords": [
     "react-like",
@@ -32,9 +32,9 @@
   "author": "RubyLouvre",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/RubyLouvre/anu/issues"
+    "url": "https://github.com/lizheming/anu/issues"
   },
-  "homepage": "https://github.com/RubyLouvre/anu#readme",
+  "homepage": "https://github.com/lizheming/anu#readme",
   "devDependencies": {
     "@babel/core": "^7.3.3",
     "@babel/generator": "^7.3.3",

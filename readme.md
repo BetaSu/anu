@@ -1,10 +1,10 @@
 
-![anujs](https://github.com/RubyLouvre/anu/blob/master/lib/logo.png?raw=true)
+![anujs](https://github.com/lizheming/anu/blob/master/lib/logo.png?raw=true)
 
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Rubylouvre/anu/blob/master/LICENSE) 
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/lizheming/anu/blob/master/LICENSE) 
 [![npm version](https://img.shields.io/npm/v/anujs.svg?style=flat)](https://www.npmjs.com/package/anujs)
-[![CircleCI](https://circleci.com/gh/RubyLouvre/anu/tree/master.svg?style=svg)](https://circleci.com/gh/RubyLouvre/anu/tree/master)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/RubyLouvre/anu/pulls)
+[![CircleCI](https://circleci.com/gh/lizheming/anu/tree/master.svg?style=svg)](https://circleci.com/gh/lizheming/anu/tree/master)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/lizheming/anu/pulls)
 
 
 
