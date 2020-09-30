@@ -119,8 +119,8 @@ Renderer.batchedUpdates = function(callback, event) {
                     macrotasks.push(el);
                 }
             }
-            event && Renderer.fireMiddlewares();
             Renderer.scheduleWork();
+            event && Renderer.fireMiddlewares();
         }
     }
 };

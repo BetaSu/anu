@@ -196,9 +196,13 @@ function onCompositionStart(e) {
     e.target.__onComposition = true;
 }
 
+function onCompositionUpdate(e) {
+    e.target.__onComposition = false;
+}
+
+// 可能并不需要end，update会先于input触发
 function onCompositionEnd(e) {
     e.target.__onComposition = false;
-    //dispatchEvent(e, "change");
 }
 const input2change = /text|password|search|url|email/i;
 //react中，text,textarea,password元素的change事件实质上是input事件
@@ -206,6 +210,7 @@ const input2change = /text|password|search|url|email/i;
 if (!document['__input']) {
     globalEvents.input = document['__input'] = true;
     addEvent(document, 'compositionstart', onCompositionStart);
+    addEvent(document, 'compositionupdate', onCompositionUpdate);
     addEvent(document, 'compositionend', onCompositionEnd);
     addEvent(document, 'input', function(e) {
         var dom = getTarget(e);
