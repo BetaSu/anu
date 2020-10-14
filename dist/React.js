@@ -1,5 +1,5 @@
 /**
- * by 司徒正美 Copyright 2020-09-30
+ * by 司徒正美 Copyright 2020-10-14
  * IE9+
  */
 
@@ -3331,7 +3331,7 @@
         findDOMNode: findDOMNode,
         unmountComponentAtNode: unmountComponentAtNode,
         unstable_renderSubtreeIntoContainer: unstable_renderSubtreeIntoContainer,
-        version: '1.6.3',
+        version: '1.6.4',
         render: render$1,
         hydrate: render$1,
         unstable_batchedUpdates: DOMRenderer.batchedUpdates,

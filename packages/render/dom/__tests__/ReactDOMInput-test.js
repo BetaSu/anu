@@ -530,7 +530,7 @@ describe('ReactDOMInput', () => {
 
     const node = container.firstChild;
     let nodeValue = 'a';
-    const nodeValueSetter = jest.genMockFn();
+    const nodeValueSetter = jest.fn();
     Object.defineProperty(node, 'value', {
       get: function() {
         return nodeValue;
@@ -553,7 +553,7 @@ describe('ReactDOMInput', () => {
 
     const node = container.firstChild;
     let nodeValue = '0';
-    const nodeValueSetter = jest.genMockFn();
+    const nodeValueSetter = jest.fn();
     Object.defineProperty(node, 'value', {
       get: function() {
         return nodeValue;
@@ -573,7 +573,7 @@ describe('ReactDOMInput', () => {
 
     const node = container.firstChild;
     let nodeValue = 'true';
-    const nodeValueSetter = jest.genMockFn();
+    const nodeValueSetter = jest.fn();
     Object.defineProperty(node, 'value', {
       get: function() {
         return nodeValue;
