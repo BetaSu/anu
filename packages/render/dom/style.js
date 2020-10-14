@@ -41,7 +41,7 @@ export function patchStyle(dom, lastStyle, nextStyle) {
 }
 
 export let cssNumber = oneObject(
-    "animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom"
+    "animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom,WebkitLineClamp"
 );
 
 //let testStyle = document.documentElement.style
