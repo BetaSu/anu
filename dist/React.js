@@ -1000,7 +1000,7 @@
         }
       }
     }
-    var cssNumber = oneObject("animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom");
+    var cssNumber = oneObject("animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom,WebkitLineClamp");
     var prefixes = ["", "-webkit-", "-o-", "-moz-", "-ms-"];
     var cssMap = oneObject("float", "cssFloat");
     function cssName(name, dom) {
@@ -3331,7 +3331,7 @@
         findDOMNode: findDOMNode,
         unmountComponentAtNode: unmountComponentAtNode,
         unstable_renderSubtreeIntoContainer: unstable_renderSubtreeIntoContainer,
-        version: '1.6.4',
+        version: '1.6.5',
         render: render$1,
         hydrate: render$1,
         unstable_batchedUpdates: DOMRenderer.batchedUpdates,
