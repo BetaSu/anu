@@ -63,7 +63,7 @@ function forward(fiber) {
 }
 
 function downward(fiber) {
-    var found;
+    let found;
     while (fiber.lastChild) {
         fiber = fiber.lastChild;
         if (fiber.disposed || fiber.isPortal) {
@@ -71,6 +71,10 @@ function downward(fiber) {
         }
         if (fiber.tag > 3) {
             return fiber;
+        }
+        found = downward(fiber);
+        if (found) {
+            return found;
         }
         if (fiber.forward) {
             found = forward(fiber);
