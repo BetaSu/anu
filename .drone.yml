@@ -17,6 +17,14 @@ steps:
   commands:
   - npm test
 
+- name: Code Coverage
+  image: lizheming/drone-coveralls
+  settings:
+    token:
+      from_secret: COVERALLS_TOKEN
+    files:
+    - ./coverage/lcov.info
+
 - name: Release NPM Package
   image: node:lts-alpine
   environment:
