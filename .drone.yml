@@ -17,7 +17,7 @@ steps:
   commands:
   - npm test
 
-- name: Release NPN Package
+- name: Release NPM Package
   image: node:lts-alpine
   environment:
     NPM_TOKEN:
