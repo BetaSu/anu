@@ -1,0 +1,28 @@
+kind: pipeline
+type: docker
+name: realse
+
+trigger:
+  branch:
+  - master
+
+steps:
+- name: Install Dependencies
+  image: node:lts-alpine
+  commands:
+  - npm install 
+
+- name: Continuous integration
+  image: node:lts-alpine
+  commands:
+  - npm test
+
+- name: Release NPN Package
+  image: node:lts-alpine
+  environment:
+    NPM_TOKEN:
+      from_secret: NPM_TOKEN
+    GH_TOKEN:
+      from_secret: GH_TOKEN
+  commands:
+  - npm run semantic-release

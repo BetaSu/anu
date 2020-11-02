@@ -3,7 +3,7 @@
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/lizheming/anu/blob/master/LICENSE) 
 [![npm version](https://img.shields.io/npm/v/anujs.svg?style=flat)](https://www.npmjs.com/package/anujs)
-[![CircleCI](https://circleci.com/gh/lizheming/anu/tree/master.svg?style=svg)](https://circleci.com/gh/lizheming/anu/tree/master)
+[![Build Status](https://cloud.drone.io/api/badges/lizheming/anu/status.svg)](https://cloud.drone.io/lizheming/anu)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/lizheming/anu/pulls)
 
 
@@ -12,8 +12,7 @@
 npm install anujs
 ```
 
-A mini React-like framework that is extremely compatible with  React16。
-QQ group：  370262116
+A mini React-like framework that is extremely compatible with  React17。
 
 ![size](https://wx1.sinaimg.cn/mw690/7109e87fly1frfqw50lduj21kw0rzk0h.jpg)
 
@@ -21,7 +20,7 @@ source： https://bundlephobia.com/
 
 ### advantage：
 
-1. Support various new features of **React16**, Fragment, componentDidCatch, creactContext, createRef, forwardRef...
+1. Support various new features of **React17**, Fragment, componentDidCatch, creactContext, createRef, forwardRef...
 2. The size is very small (only 3000 lines, gzip only 13kb, one third of React+ReactDOM)
 3. Pass more than 700 official unit tests  (other mini libraries can not run the official test)
 4. Share the huge ecology of React（React-router-dom, react-router-redux, react-lazy-load, react-hot-loader...）
