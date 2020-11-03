@@ -121,6 +121,9 @@ function insertElement(fiber) {
         if (after === null && dom === parent.lastChild) {
             return;
         }
+        if (dom.nextSibling && dom.nextSibling === after) {
+            return;
+        }
         //插入**元素节点**会引发焦点丢失，触发body focus事件
         Renderer.inserting = fiber.tag === 5 && safeActiveElement();
         parent.insertBefore(dom, after);
