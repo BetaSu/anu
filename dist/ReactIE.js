@@ -3166,6 +3166,9 @@
         if (after === null && dom === parent.lastChild) {
           return;
         }
+        if (dom.nextSibling && dom.nextSibling === after) {
+          return;
+        }
         Renderer.inserting = fiber.tag === 5 && safeActiveElement();
         parent.insertBefore(dom, after);
         Renderer.inserting = null;
@@ -3460,7 +3463,7 @@
         unmountComponentAtNode: unmountComponentAtNode,
         unstable_renderSubtreeIntoContainer: unstable_renderSubtreeIntoContainer,
         miniCreateClass: miniCreateClass,
-        version: '1.7.2',
+        version: '1.7.3',
         render: render$1,
         hydrate: render$1,
         unstable_batchedUpdates: DOMRenderer.batchedUpdates,
