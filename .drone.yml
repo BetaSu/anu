@@ -11,6 +11,7 @@ steps:
   image: node:lts-alpine
   commands:
   - npm install 
+  - npm run build
 
 - name: Continuous integration
   image: node:lts-alpine
