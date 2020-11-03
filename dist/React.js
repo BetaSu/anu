@@ -1,5 +1,5 @@
 /**
- * by 司徒正美 Copyright 2020-10-14
+ * by 司徒正美 Copyright 2020-11-03
  * IE9+
  */
 
@@ -2239,6 +2239,10 @@
         if (fiber.tag > 3) {
           return fiber;
         }
+        found = downward(fiber);
+        if (found) {
+          return found;
+        }
         if (fiber.forward) {
           found = forward(fiber);
           if (found) {
@@ -3331,7 +3335,7 @@
         findDOMNode: findDOMNode,
         unmountComponentAtNode: unmountComponentAtNode,
         unstable_renderSubtreeIntoContainer: unstable_renderSubtreeIntoContainer,
-        version: '1.6.5',
+        version: '1.7.2',
         render: render$1,
         hydrate: render$1,
         unstable_batchedUpdates: DOMRenderer.batchedUpdates,

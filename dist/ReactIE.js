@@ -1,5 +1,5 @@
 /**
- * IE6+，有问题请加QQ 370262116 by 司徒正美 Copyright 2020-10-14
+ * IE6+，有问题请加QQ 370262116 by 司徒正美 Copyright 2020-11-03
  */
 
 (function (global, factory) {
@@ -2164,6 +2164,10 @@
         if (fiber.tag > 3) {
           return fiber;
         }
+        found = downward(fiber);
+        if (found) {
+          return found;
+        }
         if (fiber.forward) {
           found = forward(fiber);
           if (found) {
@@ -3456,7 +3460,7 @@
         unmountComponentAtNode: unmountComponentAtNode,
         unstable_renderSubtreeIntoContainer: unstable_renderSubtreeIntoContainer,
         miniCreateClass: miniCreateClass,
-        version: '1.6.5',
+        version: '1.7.2',
         render: render$1,
         hydrate: render$1,
         unstable_batchedUpdates: DOMRenderer.batchedUpdates,
