@@ -104,26 +104,36 @@ function updateHostComponent(fiber, info) {
         fiber.parent = info.containerStack[0];
         fiber.stateNode = Renderer.createElement(fiber);
     }
-    const parent = fiber.parent;
-
+    var parent = fiber.parent;
     fiber.forwardFiber = parent.insertPoint;
-
     parent.insertPoint = fiber;
-    fiber.effectTag = PLACE;
-    if (tag === 5) {
-        // 元素节点
-        fiber.stateNode.insertPoint = null;
-        info.containerStack.unshift(fiber.stateNode);
-        fiber.shiftContainer = true;
-        fiber.effectTag *= ATTR;
-        if (fiber.ref) {
-            fiber.effectTag *= REF;
-        }
-        diffChildren(fiber, props.children);
+    var isMounting = !fiber.hasMounted;
+    var parentFiber = parent._reactInternalNodeFiber || parent._reactInternalFiber;
+    if (isMounting && parentFiber && !parentFiber.hasMounted) {
+      Renderer.insertElement(fiber);
+      fiber.effectTag = WORKING;
     } else {
-        if (!prev || prev.props !== props) {
-            fiber.effectTag *= CONTENT;
-        }
+      fiber.effectTag = PLACE;
+    }
+    if (tag === 5) {
+      if (isMounting) {
+        Renderer.updateAttribute(fiber);
+      } else {
+        fiber.effectTag *= ATTR;
+      }
+      fiber.stateNode.insertPoint = null;
+      info.containerStack.unshift(fiber.stateNode);
+      fiber.shiftContainer = true;
+      if (fiber.ref) {
+        fiber.effectTag *= REF;
+      }
+      diffChildren(fiber, props.children);
+    } else {
+      if (isMounting) {
+        Renderer.updateContent(fiber);
+      } else if (!current || current.props !== props) {
+        fiber.effectTag *= CONTENT;
+      }
     }
 }
 
