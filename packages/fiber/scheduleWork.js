@@ -1,4 +1,4 @@
-import { reconcileDFS } from './beginWork';
+import { performUnitOfWork } from './beginWork';
 import { commitDFS } from './commitWork';
 import { Renderer } from 'react-core/createRenderer';
 import {
@@ -16,9 +16,14 @@ import { Unbatch } from './unbatch';
 import { Fiber } from './Fiber';
 
 import { createInstance } from './createInstance';
+import { shouldYield, scheduleCallback } from '../scheduler/src/scheduler';
+
 const macrotasks = Renderer.macrotasks;
 let boundaries = Renderer.boundaries;
 const batchedtasks = [];
+
+// 当前正在render阶段的fiber，workInProgress简写
+let wip = null;
 
 export function render(vnode, root, callback) {
     let container = createContainer(root),
@@ -62,9 +67,10 @@ function wrapCb(fn, carrier) {
     };
 }
 
-function performWork(deadline) {
-    //更新虚拟DOM与真实环境
-    workLoop(deadline);
+function scheduleWork() {
+    // 更新虚拟DOM与真实环境
+    performWork();
+
     //如果更新过程中产生新的任务（setState与gDSFP），它们会放到每棵树的microtasks
     //我们需要再做一次收集，不为空时，递归调用
 
@@ -83,24 +89,11 @@ function performWork(deadline) {
         }
     });
     if (macrotasks.length) {
-        requestIdleCallback(performWork);
+        scheduleWork();
     }
 }
 
-let ENOUGH_TIME = 1;
-let deadline = {
-    didTimeout: false,
-    timeRemaining() {
-        return 2;
-    }
-};
-
-function requestIdleCallback(fn) {
-    fn(deadline);
-}
-Renderer.scheduleWork = function() {
-    performWork(deadline);
-};
+Renderer.scheduleWork = scheduleWork;
 
 let isBatching = false;
 
@@ -125,45 +118,55 @@ Renderer.batchedUpdates = function(callback, event) {
     }
 };
 
-function workLoop(deadline) {
-    let fiber = macrotasks.shift(),
-        info;
-    if (fiber) {
-        if (fiber.type === Unbatch) {
-            info = fiber.return;
-        } else {
-            let dom = getContainer(fiber);
-            info = {
-                containerStack: [dom],
-                contextStack: [fiber.stateNode.__unmaskedContext]
-            };
-        }
 
-        reconcileDFS(fiber, info, deadline, ENOUGH_TIME);
-        updateCommitQueue(fiber);
-        resetStack(info);
-        if (macrotasks.length && deadline.timeRemaining() > ENOUGH_TIME) {
-            workLoop(deadline); //收集任务
-        } else {
-            commitDFS(effects); //执行任务
-        }
+
+function workLoopConcurrent(stackInfo) {
+    while (wip && !shouldYield()) {
+        wip = performUnitOfWork(wip, stackInfo);
     }
 }
 
-function updateCommitQueue(fiber) {
-    var hasBoundary = boundaries.length;
-    if (fiber.type !== Unbatch) {
-        //如果是某个组件更新
-        if (hasBoundary) {
-            //如果在reconcile阶段发生异常，那么commit阶段就不会从原先的topFiber出发，而是以边界组件的alternate出发
-            arrayPush.apply(effects, boundaries);
-        } else {
-            effects.push(fiber);
-        }
-    } else {
-        effects.push(fiber);
+function workLoopSync(stackInfo) {
+    while (wip) {
+        wip = performUnitOfWork(wip, stackInfo);
     }
-    boundaries.length = 0;
+}
+
+function performWork(stackInfo) {
+    if (!wip) {
+        wip = macrotasks.shift();
+        if (wip) {
+            if (wip.type === Unbatch) {
+                stackInfo = wip.return;
+            } else {
+                let dom = getContainer(wip);
+                stackInfo = {
+                    containerStack: [dom],
+                    contextStack: [wip.stateNode.__unmaskedContext]
+                };
+            }
+        } else {
+            return;
+        } 
+    }
+
+    scheduleCallback(() => {
+        workLoopConcurrent(stackInfo);
+        // workLoopSync(stackInfo);
+
+        if (!wip) {
+            resetStack(stackInfo);
+            if (macrotasks.length) {
+                //收集任务
+                performWork(); 
+            } else {
+                // 执行任务
+                commitDFS(effects); 
+            }
+        } else {
+            return performWork.bind(null, stackInfo);
+        }
+    }) 
 }
 
 /**

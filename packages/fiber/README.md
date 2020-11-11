@@ -61,7 +61,7 @@ workLoop相当于浏览器中的EventLoop, 用于执行macrotasks与micotasks里
 1. macrotasks，宏列队，主进程，一个页面只有一个。
 2. microtasks，微列队，子进程，每棵虚拟DOM树都有一个，放在根节点中。当组件执行setState后，它会找到根节点的microtasks，然后放进去。然后在下次唤起performWork时，再将它们挪到同macrotasks。
 
-workLoop里面有两个DFS 遍历，分别来自beginWork的reconcileDFS, commitWork的commitDFS。 reconcile与commit代表了React16更新时的两个阶段。
+workLoop里面有两个DFS 遍历，分别来自beginWork的performUnitOfWork, commitWork的commitDFS。 reconcile与commit代表了React16更新时的两个阶段。
 
 beginWork中有updateClassComponent与updateHostComponent,分别用于更新组件与DOM。
 

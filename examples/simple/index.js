@@ -1,13 +1,11 @@
 const {useEffect, useState} = React;
 
 function App() {
-  const [ctn, updateCtn] = useState('');
-  
+  // const [ctn, updateCtn] = useState('');
+  let len = 3000;
 
   return (
-    <input onChange={({target: {value}}) => {
-      updateCtn(value);
-    }} value={ctn} />
+    <ul>{Array(len).fill(0).map((_, i) => <li key={i}>{i}</li>)}</ul>
   );
 }
 

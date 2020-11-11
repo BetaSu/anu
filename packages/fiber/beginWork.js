@@ -22,18 +22,112 @@ import {
 } from './ErrorBoundary';
 import { resetCursor } from './dispatcher';
 import { getInsertPoint, setInsertPoints } from './insertPoint';
+import {
+    effects
+} from 'react-core/util';
+import { Unbatch } from './unbatch';
+
+const boundaries = Renderer.boundaries;
+// 当前render阶段开始performUnitOfWork时的top fiber，也是completeWork结束的fiber
+let curWorkLoopTopWork = null;
 
 /**
  * 基于DFS遍历虚拟DOM树，初始化vnode为fiber,并产出组件实例或DOM节点
  * 为instance/fiber添加context与parent, 并压入栈
  * 使用再路过此节点时，再弹出栈
  * 它需要对updateFail的情况进行优化
+ * 分为递与归两个阶段
+ * 递阶段：beginWork
+ * 归阶段：completeWork
  */
 
-export function reconcileDFS(fiber, info, deadline, ENOUGH_TIME) {
+function beginWork(fiber, info) {
+    if (fiber.disposed) {
+        return null;
+    }
+    let occurError;
+    if (fiber.tag < 3) {
+        let keepbook = Renderer.currentOwner;
+        try {
+            // 为了性能起见，constructor, render, cWM,cWRP, cWU, gDSFP, render
+            // getChildContext都可能 throw Exception，因此不逐一try catch
+            // 通过fiber.errorHook得知出错的方法
+            updateClassComponent(fiber, info); // unshift context
+        } catch (e) {
+            occurError = true;
+            pushError(fiber, fiber.errorHook, e);
+        }
+        Renderer.currentOwner = keepbook;
+        if (fiber.batching) {
+            delete fiber.updateFail;
+            delete fiber.batching;
+        }
+    } else {
+        updateHostComponent(fiber, info); // unshift parent
+    }
+    //如果没有阻断更新，没有出错
+    if (fiber.child && !fiber.updateFail && !occurError) {
+        return fiber.child;
+    }
+    return null;
+}
+
+function completeWork(fiber, info) {
+    do {
+        if (fiber.disposed) {
+            updateCommitQueue(curWorkLoopTopWork);
+            curWorkLoopTopWork = null;
+            return null;
+        }
+        let instance = fiber.stateNode;
+        if (fiber.tag > 3 || fiber.shiftContainer) {
+            if (fiber.shiftContainer) {
+                //元素节点与AnuPortal
+                delete fiber.shiftContainer;
+                info.containerStack.shift(); // shift parent
+            }
+        } else {
+            let updater = instance && instance.updater;
+            if (fiber.shiftContext) {
+                delete fiber.shiftContext;
+                info.contextStack.shift(); // shift context
+            }
+            if (fiber.hasMounted && instance[gSBU]) {
+                updater.snapshot = guardCallback(instance, gSBU, [
+                    updater.prevProps,
+                    updater.prevState
+                ]);
+            }
+        }
+
+        if (fiber === curWorkLoopTopWork) {
+            updateCommitQueue(curWorkLoopTopWork);
+            curWorkLoopTopWork = null;
+            return null;
+        }
+        if (fiber.sibling) {
+            return fiber.sibling;
+        }
+        fiber = fiber.return;
+    } while (fiber !== null)
+}
+
+export function performUnitOfWork(fiber, info) {
+    if (!curWorkLoopTopWork) {
+        curWorkLoopTopWork = fiber;
+    }
+    let next = beginWork(fiber, info);
+    if (next === null) {
+        return completeWork(fiber, info);
+    }
+    return next;
+}
+
+
+function reconcileDFS(fiber, info, deadline) {
     var topWork = fiber;
     outerLoop: while (fiber) {
-        if (fiber.disposed || deadline.timeRemaining() <= ENOUGH_TIME) {
+        if (fiber.disposed) {
             break;
         }
         let occurError;
@@ -159,6 +253,22 @@ function mergeStates(fiber, nextProps) {
     } else {
         return (fiber.memoizedState = nextState);
     }
+}
+
+function updateCommitQueue(fiber) {
+    var hasBoundary = boundaries.length;
+    if (fiber.type !== Unbatch) {
+        //如果是某个组件更新
+        if (hasBoundary) {
+            //如果在reconcile阶段发生异常，那么commit阶段就不会从原先的topFiber出发，而是以边界组件的alternate出发
+            arrayPush.apply(effects, boundaries);
+        } else {
+            effects.push(fiber);
+        }
+    } else {
+        effects.push(fiber);
+    }
+    boundaries.length = 0;
 }
 
 export function updateClassComponent(fiber, info) {

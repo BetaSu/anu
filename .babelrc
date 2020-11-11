@@ -34,6 +34,7 @@
         ],
         "alias": {
           "react-core": "./packages/core",
+          "scheduler": "./packages/scheduler",
           "react-fiber": "./packages/fiber",
           "prop-types": "./lib/ReactPropTypes",
           "create-react-class": "./lib/createClass",
