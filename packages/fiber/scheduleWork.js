@@ -16,7 +16,14 @@ import { Unbatch } from './unbatch';
 import { Fiber } from './Fiber';
 
 import { createInstance } from './createInstance';
-import { shouldYield, scheduleCallback } from '../scheduler/src/scheduler';
+import { 
+    shouldYield,
+    scheduleCallback,
+    runWithPriority,
+    getCurrentPriority,
+    ASYNC_PRIORITY,
+    SYNC_PRIORITY 
+} from '../scheduler/src/scheduler';
 
 const macrotasks = Renderer.macrotasks;
 let boundaries = Renderer.boundaries;
@@ -24,6 +31,8 @@ const batchedtasks = [];
 
 // 当前正在render阶段的fiber，workInProgress简写
 let wip = null;
+// 保存render阶段执行过程中的栈信息
+let stackInfo;
 
 export function render(vnode, root, callback) {
     let container = createContainer(root),
@@ -67,19 +76,14 @@ function wrapCb(fn, carrier) {
     };
 }
 
-function scheduleWork() {
-    // 更新虚拟DOM与真实环境
-    performWork();
-
-    //如果更新过程中产生新的任务（setState与gDSFP），它们会放到每棵树的microtasks
-    //我们需要再做一次收集，不为空时，递归调用
-
+//如果更新过程中产生新的任务（setState与gDSFP），它们会放到每棵树的microtasks
+//我们需要再做一次收集，不为空时，递归调用
+function collectTask() {
     if (boundaries.length) {
         //优先处理异常边界的setState
         macrotasks.unshift.apply(macrotasks, boundaries);
         boundaries.length = 0;
     }
-
     topFibers.forEach(function(el) {
         let microtasks = el.microtasks;
         while ((el = microtasks.shift())) {
@@ -87,13 +91,21 @@ function scheduleWork() {
                 macrotasks.push(el);
             }
         }
-    });
-    if (macrotasks.length) {
-        scheduleWork();
-    }
+    })
 }
 
-Renderer.scheduleWork = scheduleWork;
+
+Renderer.scheduleWork = () => {
+    const schedulerTask = performWork();
+
+    // 没有被调度的任务时，收集任务后重新调度
+    if (!schedulerTask) {
+        collectTask();
+        if (macrotasks.length) {
+            Renderer.scheduleWork();
+        }
+    }
+};
 
 let isBatching = false;
 
@@ -120,22 +132,23 @@ Renderer.batchedUpdates = function(callback, event) {
 
 
 
-function workLoopConcurrent(stackInfo) {
+function workLoopConcurrent() {
     while (wip && !shouldYield()) {
         wip = performUnitOfWork(wip, stackInfo);
     }
 }
 
-function workLoopSync(stackInfo) {
+function workLoopSync() {
     while (wip) {
         wip = performUnitOfWork(wip, stackInfo);
     }
 }
 
-function performWork(stackInfo) {
+function performWork() {
     if (!wip) {
         wip = macrotasks.shift();
         if (wip) {
+            // 开始本轮render阶段
             if (wip.type === Unbatch) {
                 stackInfo = wip.return;
             } else {
@@ -146,28 +159,32 @@ function performWork(stackInfo) {
                 };
             }
         } else {
-            return;
+            return null;
         } 
     }
 
-    scheduleCallback(() => {
-        workLoopConcurrent(stackInfo);
-        // workLoopSync(stackInfo);
+    const curPriority = getCurrentPriority();
+
+    return scheduleCallback(curPriority, () => {
+        const concurrentMode = false;
+        const workLoop = concurrentMode ? workLoopConcurrent : workLoopSync;
+        workLoop();
 
         if (!wip) {
             resetStack(stackInfo);
-            if (macrotasks.length) {
-                //收集任务
-                performWork(); 
-            } else {
+            if (!macrotasks.length) {
                 // 执行任务
                 commitDFS(effects); 
-            }
+                collectTask();
+            } 
+            Renderer.scheduleWork();
         } else {
-            return performWork.bind(null, stackInfo);
+            // 时间切片中断后重新开始
+            return performWork;
         }
     }) 
 }
+
 
 /**
  * 这是一个深度优先过程，beginWork之后，对其孩子进行任务收集，然后再对其兄弟进行类似操作，
@@ -268,7 +285,7 @@ function updateComponent(fiber, state, callback, immediateUpdate) {
     }
     mergeUpdates(fiber, state, isForced, callback);
     if (immediateUpdate) {
-        Renderer.scheduleWork();
+        runWithPriority(SYNC_PRIORITY, Renderer.scheduleWork);
     }
 }
 

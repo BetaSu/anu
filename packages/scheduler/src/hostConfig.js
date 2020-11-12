@@ -2,11 +2,16 @@
 let yieldInterval = 5;
 let deadline = 0;
 
-export function getCurrentTime() {
-  if (performance.now) {
-    return performance.now();
-  }
-  return Date.now();
+export let requestHostCallback;
+export let getCurrentTime;
+
+const hasPerformanceNow = typeof performance === 'object' && typeof performance.now === 'function';
+
+if (hasPerformanceNow) {
+  getCurrentTime = () => performance.now();
+} else {
+  const initialTime = Date.now();
+  getCurrentTime = () => Date.now() - initialTime;
 }
 
 export function shouldYield() {
@@ -14,7 +19,7 @@ export function shouldYield() {
   return now - deadline >= yieldInterval;
 }
 
-export let requestHostCallback;
+
 
 if (typeof window === 'undefined' || typeof MessageChannel !== 'function') {
 
