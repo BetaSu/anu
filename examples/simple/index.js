@@ -1,12 +1,53 @@
-const {useEffect, useState} = React;
+class X extends React.Component {
+  state = {s: 0};
 
-function App() {
-  // const [ctn, updateCtn] = useState('');
-  let len = 3000;
+  render() {
+    if (this.state.s === 0) {
+      return (
+        <div>
+          <span>0</span>
+        </div>
+      );
+    } else {
+      return <div>1</div>;
+    }
+  }
 
-  return (
-    <ul>{Array(len).fill(0).map((_, i) => <li key={i}>{i}</li>)}</ul>
-  );
+  go = () => {
+    this.setState({s: 1});
+    this.setState({s: 0});
+    this.setState({s: 1});
+  };
 }
 
-ReactDOM.render(<App />, document.getElementById("root"));
+class Y extends React.Component {
+  render() {
+    return (
+      <div>
+        <Z />
+      </div>
+    );
+  }
+}
+
+class Z extends React.Component {
+  render() {
+    return <div />;
+  }
+
+  UNSAFE_componentWillUpdate() {
+    x.go();
+  }
+}
+
+
+const x = ReactDOM.render(<X />, document.querySelector('#root'));
+const y = ReactDOM.render(<Y />, document.querySelector('#root1'));
+
+
+console.log(ReactDOM.findDOMNode(x).textContent)
+// .toBe('0');
+
+y.forceUpdate();
+console.log(ReactDOM.findDOMNode(x).textContent)
+// .toBe('1');

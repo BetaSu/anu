@@ -3,9 +3,7 @@ import { commitDFS } from './commitWork';
 import { Renderer } from 'react-core/createRenderer';
 import {
     effects,
-    isMounted,
     resetStack,
-    arrayPush,
     get,
     isFn,
     topNodes,
@@ -163,9 +161,9 @@ function performWork() {
         } 
     }
 
-    const curPriority = getCurrentPriority();
+    const schedulerPriority = getCurrentPriority();
 
-    return scheduleCallback(curPriority, () => {
+    return scheduleCallback(schedulerPriority, () => {
         const concurrentMode = false;
         const workLoop = concurrentMode ? workLoopConcurrent : workLoopSync;
         workLoop();

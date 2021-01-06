@@ -23,7 +23,8 @@ import {
 import { resetCursor } from './dispatcher';
 import { getInsertPoint, setInsertPoints } from './insertPoint';
 import {
-    effects
+    effects,
+    arrayPush
 } from 'react-core/util';
 import { Unbatch } from './unbatch';
 
@@ -109,7 +110,7 @@ function completeWork(fiber, info) {
             return fiber.sibling;
         }
         fiber = fiber.return;
-    } while (fiber !== null)
+    } while (fiber)
 }
 
 export function performUnitOfWork(fiber, info) {
@@ -117,7 +118,7 @@ export function performUnitOfWork(fiber, info) {
         curWorkLoopTopWork = fiber;
     }
     let next = beginWork(fiber, info);
-    if (next === null) {
+    if (!next) {
         return completeWork(fiber, info);
     }
     return next;

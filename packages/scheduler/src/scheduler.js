@@ -3,7 +3,7 @@ import { requestHostCallback, shouldYield } from './hostConfig';
 const taskQueue = [];
 const SYNC_PRIORITY = 0;
 const ASYNC_PRIORITY = 1;
-let curPriority = ASYNC_PRIORITY;
+let curPriority = SYNC_PRIORITY;
 
 const workLoop = () => {
   const firstTask = taskQueue[0];
@@ -14,14 +14,8 @@ const workLoop = () => {
   const {priority, callback} = firstTask;
 
   if (priority === SYNC_PRIORITY) {
-    let result;
-    try {
-      result = callback();
-    } catch(e) {
-      throw e;
-    } finally {
-      return onTaskComplete(result);
-    }
+    const result = callback();
+    return onTaskComplete(result);
   }
 
   requestHostCallback(callback, continuationCallback => {

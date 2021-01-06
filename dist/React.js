@@ -1,5 +1,5 @@
 /**
- * by 司徒正美 Copyright 2020-11-03
+ * by 司徒正美 Copyright 2020-11-17
  * IE9+
  */
 
@@ -2252,61 +2252,87 @@
       }
     }
 
-    function reconcileDFS(fiber, info, deadline, ENOUGH_TIME) {
-      var topWork = fiber;
-      outerLoop: while (fiber) {
-        if (fiber.disposed || deadline.timeRemaining() <= ENOUGH_TIME) {
-          break;
+    var Unbatch = miniCreateClass(function Unbatch(props) {
+      this.state = {
+        child: props.child
+      };
+    }, Component, {
+      render: function f3() {
+        return this.state.child;
+      }
+    });
+
+    var boundaries = Renderer.boundaries;
+    var curWorkLoopTopWork = null;
+    function beginWork(fiber, info) {
+      if (fiber.disposed) {
+        return null;
+      }
+      var occurError;
+      if (fiber.tag < 3) {
+        var keepbook = Renderer.currentOwner;
+        try {
+          updateClassComponent(fiber, info);
+        } catch (e) {
+          occurError = true;
+          pushError(fiber, fiber.errorHook, e);
         }
-        var occurError = void 0;
-        if (fiber.tag < 3) {
-          var keepbook = Renderer.currentOwner;
-          try {
-            updateClassComponent(fiber, info);
-          } catch (e) {
-            occurError = true;
-            pushError(fiber, fiber.errorHook, e);
-          }
-          Renderer.currentOwner = keepbook;
-          if (fiber.batching) {
-            delete fiber.updateFail;
-            delete fiber.batching;
+        Renderer.currentOwner = keepbook;
+        if (fiber.batching) {
+          delete fiber.updateFail;
+          delete fiber.batching;
+        }
+      } else {
+        updateHostComponent(fiber, info);
+      }
+      if (fiber.child && !fiber.updateFail && !occurError) {
+        return fiber.child;
+      }
+      return null;
+    }
+    function completeWork(fiber, info) {
+      do {
+        if (fiber.disposed) {
+          updateCommitQueue(curWorkLoopTopWork);
+          curWorkLoopTopWork = null;
+          return null;
+        }
+        var instance = fiber.stateNode;
+        if (fiber.tag > 3 || fiber.shiftContainer) {
+          if (fiber.shiftContainer) {
+            delete fiber.shiftContainer;
+            info.containerStack.shift();
           }
         } else {
-          updateHostComponent(fiber, info);
-        }
-        if (fiber.child && !fiber.updateFail && !occurError) {
-          fiber = fiber.child;
-          continue outerLoop;
-        }
-        var f = fiber;
-        while (f) {
-          var instance = f.stateNode;
-          if (f.tag > 3 || f.shiftContainer) {
-            if (f.shiftContainer) {
-              delete f.shiftContainer;
-              info.containerStack.shift();
-            }
-          } else {
-            var updater = instance && instance.updater;
-            if (f.shiftContext) {
-              delete f.shiftContext;
-              info.contextStack.shift();
-            }
-            if (f.hasMounted && instance[gSBU]) {
-              updater.snapshot = guardCallback(instance, gSBU, [updater.prevProps, updater.prevState]);
-            }
+          var updater = instance && instance.updater;
+          if (fiber.shiftContext) {
+            delete fiber.shiftContext;
+            info.contextStack.shift();
           }
-          if (f === topWork) {
-            break outerLoop;
+          if (fiber.hasMounted && instance[gSBU]) {
+            updater.snapshot = guardCallback(instance, gSBU, [updater.prevProps, updater.prevState]);
           }
-          if (f.sibling) {
-            fiber = f.sibling;
-            continue outerLoop;
-          }
-          f = f["return"];
         }
+        if (fiber === curWorkLoopTopWork) {
+          updateCommitQueue(curWorkLoopTopWork);
+          curWorkLoopTopWork = null;
+          return null;
+        }
+        if (fiber.sibling) {
+          return fiber.sibling;
+        }
+        fiber = fiber["return"];
+      } while (fiber);
+    }
+    function performUnitOfWork(fiber, info) {
+      if (!curWorkLoopTopWork) {
+        curWorkLoopTopWork = fiber;
       }
+      var next = beginWork(fiber, info);
+      if (!next) {
+        return completeWork(fiber, info);
+      }
+      return next;
     }
     function updateHostComponent(fiber, info) {
       var props = fiber.props,
@@ -2365,6 +2391,19 @@
       } else {
         return fiber.memoizedState = nextState;
       }
+    }
+    function updateCommitQueue(fiber) {
+      var hasBoundary = boundaries.length;
+      if (fiber.type !== Unbatch) {
+        if (hasBoundary) {
+          arrayPush.apply(effects, boundaries);
+        } else {
+          effects.push(fiber);
+        }
+      } else {
+        effects.push(fiber);
+      }
+      boundaries.length = 0;
     }
     function updateClassComponent(fiber, info) {
       var type = fiber.type,
@@ -2882,19 +2921,139 @@
       fiber.effectTag = NOWORK;
     }
 
-    var Unbatch = miniCreateClass(function Unbatch(props) {
-      this.state = {
-        child: props.child
-      };
-    }, Component, {
-      render: function f3() {
-        return this.state.child;
+    function _typeof(obj) {
+      "@babel/helpers - typeof";
+
+      if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+        _typeof = function (obj) {
+          return typeof obj;
+        };
+      } else {
+        _typeof = function (obj) {
+          return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+        };
       }
-    });
+
+      return _typeof(obj);
+    }
+
+    var requestHostCallback;
+    var getCurrentTime;
+    var hasPerformanceNow = (typeof performance === "undefined" ? "undefined" : _typeof(performance)) === 'object' && typeof performance.now === 'function';
+    if (hasPerformanceNow) {
+      getCurrentTime = function getCurrentTime() {
+        return performance.now();
+      };
+    } else {
+      var initialTime = Date.now();
+      getCurrentTime = function getCurrentTime() {
+        return Date.now() - initialTime;
+      };
+    }
+    if (typeof window === 'undefined' || typeof MessageChannel !== 'function') {
+      requestHostCallback = function requestHostCallback(fn, callback) {
+        var now = getCurrentTime();
+        setTimeout(function () {
+          var result;
+          try {
+            result = fn();
+          } catch (e) {
+            throw e;
+          } finally {
+            callback && callback(result);
+          }
+        });
+      };
+    } else {
+      var performWorkUntilDeadline = function performWorkUntilDeadline() {
+        if (!callbackData) {
+          return;
+        }
+        var _callbackData = callbackData,
+            callback = _callbackData.callback,
+            fn = _callbackData.fn;
+        var now = getCurrentTime();
+        var result;
+        try {
+          result = fn();
+        } catch (e) {
+          throw e;
+        } finally {
+          isMessageLoopRunning = false;
+          callbackData = null;
+          callback && callback(result);
+        }
+      };
+      var isMessageLoopRunning = false;
+      var callbackData = null;
+      var channel = new MessageChannel();
+      var port = channel.port2;
+      channel.port1.onmessage = performWorkUntilDeadline;
+      requestHostCallback = function requestHostCallback(fn, callback) {
+        if (!isMessageLoopRunning) {
+          callbackData = {
+            fn: fn,
+            callback: callback
+          };
+          isMessageLoopRunning = true;
+          port.postMessage(null);
+        }
+      };
+    }
+
+    var taskQueue = [];
+    var SYNC_PRIORITY = 0;
+    var curPriority = SYNC_PRIORITY;
+    var workLoop = function workLoop() {
+      var firstTask = taskQueue[0];
+      if (!firstTask) {
+        return;
+      }
+      var priority = firstTask.priority,
+          callback = firstTask.callback;
+      if (priority === SYNC_PRIORITY) {
+        var result = callback();
+        return onTaskComplete(result);
+      }
+      requestHostCallback(callback, function (continuationCallback) {
+        onTaskComplete(continuationCallback);
+      });
+    };
+    function onTaskComplete(continuationCallback) {
+      taskQueue.shift();
+      if (typeof continuationCallback === 'function') {
+        firstTask.callback = continuationCallback;
+        taskQueue.unshift(firstTask);
+      }
+      workLoop();
+    }
+    var scheduleCallback = function scheduleCallback(priority, callback) {
+      var task = {
+        callback: callback,
+        priority: priority
+      };
+      taskQueue.push(task);
+      workLoop();
+      return task;
+    };
+    var runWithPriority = function runWithPriority(priority, callback) {
+      var prevPriority = curPriority;
+      curPriority = priority;
+      try {
+        callback();
+      } finally {
+        curPriority = prevPriority;
+      }
+    };
+    var getCurrentPriority = function getCurrentPriority() {
+      return curPriority;
+    };
 
     var macrotasks = Renderer.macrotasks;
-    var boundaries = Renderer.boundaries;
+    var boundaries$1 = Renderer.boundaries;
     var batchedtasks = [];
+    var wip = null;
+    var stackInfo;
     function render(vnode, root, callback) {
       var container = createContainer(root),
           immediateUpdate = false;
@@ -2928,11 +3087,10 @@
         carrier.instance = target;
       };
     }
-    function performWork(deadline) {
-      workLoop(deadline);
-      if (boundaries.length) {
-        macrotasks.unshift.apply(macrotasks, boundaries);
-        boundaries.length = 0;
+    function collectTask() {
+      if (boundaries$1.length) {
+        macrotasks.unshift.apply(macrotasks, boundaries$1);
+        boundaries$1.length = 0;
       }
       topFibers.forEach(function (el) {
         var microtasks = el.microtasks;
@@ -2942,22 +3100,15 @@
           }
         }
       });
-      if (macrotasks.length) {
-        requestIdleCallback(performWork);
-      }
-    }
-    var ENOUGH_TIME = 1;
-    var deadline = {
-      didTimeout: false,
-      timeRemaining: function timeRemaining() {
-        return 2;
-      }
-    };
-    function requestIdleCallback(fn) {
-      fn(deadline);
     }
     Renderer.scheduleWork = function () {
-      performWork(deadline);
+      var schedulerTask = performWork();
+      if (!schedulerTask) {
+        collectTask();
+        if (macrotasks.length) {
+          Renderer.scheduleWork();
+        }
+      }
     };
     var isBatching = false;
     Renderer.batchedUpdates = function (callback, event) {
@@ -2980,41 +3131,43 @@
         }
       }
     };
-    function workLoop(deadline) {
-      var fiber = macrotasks.shift(),
-          info;
-      if (fiber) {
-        if (fiber.type === Unbatch) {
-          info = fiber["return"];
-        } else {
-          var dom = getContainer(fiber);
-          info = {
-            containerStack: [dom],
-            contextStack: [fiber.stateNode.__unmaskedContext]
-          };
-        }
-        reconcileDFS(fiber, info, deadline, ENOUGH_TIME);
-        updateCommitQueue(fiber);
-        resetStack(info);
-        if (macrotasks.length && deadline.timeRemaining() > ENOUGH_TIME) {
-          workLoop(deadline);
-        } else {
-          commitDFS(effects);
-        }
+    function workLoopSync() {
+      while (wip) {
+        wip = performUnitOfWork(wip, stackInfo);
       }
     }
-    function updateCommitQueue(fiber) {
-      var hasBoundary = boundaries.length;
-      if (fiber.type !== Unbatch) {
-        if (hasBoundary) {
-          arrayPush.apply(effects, boundaries);
+    function performWork() {
+      if (!wip) {
+        wip = macrotasks.shift();
+        if (wip) {
+          if (wip.type === Unbatch) {
+            stackInfo = wip["return"];
+          } else {
+            var dom = getContainer(wip);
+            stackInfo = {
+              containerStack: [dom],
+              contextStack: [wip.stateNode.__unmaskedContext]
+            };
+          }
         } else {
-          effects.push(fiber);
+          return null;
         }
-      } else {
-        effects.push(fiber);
       }
-      boundaries.length = 0;
+      var schedulerPriority = getCurrentPriority();
+      return scheduleCallback(schedulerPriority, function () {
+        var workLoop = workLoopSync;
+        workLoop();
+        if (!wip) {
+          resetStack(stackInfo);
+          if (!macrotasks.length) {
+            commitDFS(effects);
+            collectTask();
+          }
+          Renderer.scheduleWork();
+        } else {
+          return performWork;
+        }
+      });
     }
     function mergeUpdates(fiber, state, isForced, callback) {
       var updateQueue = fiber.updateQueue;
@@ -3094,7 +3247,7 @@
       }
       mergeUpdates(fiber, state, isForced, callback);
       if (immediateUpdate) {
-        Renderer.scheduleWork();
+        runWithPriority(SYNC_PRIORITY, Renderer.scheduleWork);
       }
     }
     Renderer.updateComponent = updateComponent;
@@ -3338,7 +3491,7 @@
         findDOMNode: findDOMNode,
         unmountComponentAtNode: unmountComponentAtNode,
         unstable_renderSubtreeIntoContainer: unstable_renderSubtreeIntoContainer,
-        version: '1.7.3',
+        version: '1.7.4',
         render: render$1,
         hydrate: render$1,
         unstable_batchedUpdates: DOMRenderer.batchedUpdates,
